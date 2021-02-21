@@ -2,33 +2,123 @@
 
 void CustomGL::slSetGeometryType(int typ)
 {
-    this->geomType = typ;
+    this->geomType = typ + GL_POINTS;
 
+    paintGL();
+}
+
+void CustomGL::slSetAlphaType(int typ)
+{
+    alphaType = typ+GL_NEVER;
+    qDebug()<<"AlphaTYpe set to "<<typ<<endl;
+    paintGL();
+}
+
+void CustomGL::slSetAlphaVal(int value)
+{
+
+    this->alphaVal = (float)((float)value+1)/100.0f;
+//    qDebug()<<"AlphaVal set to "<<value<<endl;
+    paintGL();
+}
+
+void CustomGL::slSetScX(int value)
+{
+//    qDebug()<<"Sc x set to "<<value<<endl;
+    xSc = (value+1)/100.0f;
+    paintGL();
+}
+
+void CustomGL::slSetScY(int value)
+{
+//    qDebug()<<"Sc y set to "<<value<<endl;
+    ySc = (value+1)/100.0f;
+    paintGL();
+}
+
+/*
+#define GL_ZERO					0
+#define GL_ONE					1
+#define GL_SRC_COLOR				0x0300
+#define GL_ONE_MINUS_SRC_COLOR			0x0301
+#define GL_SRC_ALPHA				0x0302
+#define GL_ONE_MINUS_SRC_ALPHA			0x0303
+#define GL_DST_ALPHA				0x0304
+#define GL_ONE_MINUS_DST_ALPHA			0x0305
+#define GL_DST_COLOR				0x0306
+#define GL_ONE_MINUS_DST_COLOR			0x0307
+#define GL_SRC_ALPHA_SATURATE			0x0308
+*/
+
+void CustomGL::slSetSfactorType(int typ)
+{
+    qDebug()<<"sfactorType set to "<<typ<<endl;
+    if(typ<=10){
+        sfactorType = typ + GL_SRC_COLOR;
+    } else{
+        sfactorType = typ - 11;
+    }
+    paintGL();
+}
+
+void CustomGL::slSetDfactorType(int typ)
+{
+    qDebug()<<"dfactorType set to "<<typ<<endl;
+    if(typ<=10){
+        sfactorType = typ + GL_SRC_COLOR;
+    } else{
+        sfactorType = typ - 11;
+    }
     paintGL();
 }
 
 CustomGL::CustomGL()
 {
-    pts.push_back({0.0,.9});
-    pts.push_back({-.6,.5});
-    pts.push_back({-.6,-.5});
 
-    pts.push_back({0.0,-.9});
-    pts.push_back({.6,-.5});
-    pts.push_back({.6,.5});
+    pts.push_back({0.0,.9}); //T
+    pts.push_back({-.6,-.5});//BL
+    pts.push_back({.6,.5});  //TR
+    pts.push_back({-.6,.5}); //TL
+    pts.push_back({.6,-.5}); //BR
+    pts.push_back({0.0,.9}); //T
+
+//    pts.push_back({0.0,.9}); //T
+
+//    pts.push_back({0.0,-.9});//B
 
     colors.push_back(std::make_tuple(0.0,1.0,0.0)); //T
-    colors.push_back(std::make_tuple(1.0,1.0,0.0)); //TL
     colors.push_back(std::make_tuple(1.0,0.0,0.0)); //BL
-
-    colors.push_back(std::make_tuple(1.0,0.0,1.0)); //B
-    colors.push_back(std::make_tuple(0.0,0.0,1.0)); //BR
     colors.push_back(std::make_tuple(0.0,1.0,1.0)); //TR
+    colors.push_back(std::make_tuple(1.0,1.0,0.0)); //TL
+    colors.push_back(std::make_tuple(0.0,0.0,1.0)); //BR
+    colors.push_back(std::make_tuple(0.0,1.0,0.0)); //T
+
+//    colors.push_back(std::make_tuple(1.0,0.0,0.0)); //BL
+
+//    colors.push_back(std::make_tuple(1.0,0.0,1.0)); //B
+
+//    pts.push_back({0.0,.9}); //T
+//    pts.push_back({-.6,.5}); //TL
+//    pts.push_back({-.6,-.5});//BL
+
+//    pts.push_back({0.0,-.9});//B
+//    pts.push_back({.6,-.5}); //BR
+//    pts.push_back({.6,.5});  //TR
+
+//    colors.push_back(std::make_tuple(0.0,1.0,0.0)); //T
+//    colors.push_back(std::make_tuple(1.0,1.0,0.0)); //TL
+//    colors.push_back(std::make_tuple(1.0,0.0,0.0)); //BL
+
+//    colors.push_back(std::make_tuple(1.0,0.0,1.0)); //B
+//    colors.push_back(std::make_tuple(0.0,0.0,1.0)); //BR
+//    colors.push_back(std::make_tuple(0.0,1.0,1.0)); //TR
 }
 
 void CustomGL::initializeGL()
 {
-    this->qglClearColor(Qt::white);
+    this->qglClearColor(QColor(100,100,100,100));
+//    this->qglClearColor(QColor(000,000,000,100));
+//    this->qglClearColor(QColor(255,255,255,100));
 }
 
 void CustomGL::resizeGL(int nWidth, int nHeight)
@@ -53,7 +143,9 @@ void CustomGL::paintGL()
 
 void CustomGL::scene()
 {
-    int i = 0;
+    /*
+    int i = geomType;
+
     switch (geomType) {
     case 0:
         i = GL_POINTS;
@@ -62,10 +154,10 @@ void CustomGL::scene()
         i = GL_LINES;
         break;
     case 2:
-        i = GL_LINE_STRIP;
+        i = GL_LINE_LOOP;
         break;
     case 3:
-        i = GL_LINE_LOOP;
+        i = GL_LINE_STRIP;
         break;
     case 4:
         i = GL_TRIANGLES;
@@ -89,7 +181,24 @@ void CustomGL::scene()
         i=GL_POINT;
         break;
     }
-    drawGeometry(i);
+*/
+
+    glEnable(GL_BLEND);
+    glBlendFunc(sfactorType, dfactorType);
+    glEnable(GL_SCISSOR_TEST);
+
+    glScissor(w*xSc,h*ySc,w*(1-xSc),h*(1-ySc));
+
+    glEnable(GL_ALPHA_TEST);
+
+    glAlphaFunc(alphaType, alphaVal);
+    drawGeometry(geomType);
+
+    glDisable(GL_ALPHA_TEST);
+
+    glDisable(GL_SCISSOR_TEST);
+
+    glDisable(GL_BLEND);
     return;
 }
 
@@ -99,8 +208,9 @@ void CustomGL::drawGeometry(int typ)
     glLineWidth(12.0f);
     glBegin(typ);
     for(int i = 0; i < pts.size();i++){
-        glColor3f(std::get<0>(colors[i]), std::get<1>(colors[i]), std::get<2>(colors[i]));
+        glColor4f(std::get<0>(colors[i]), std::get<1>(colors[i]), std::get<2>(colors[i]),(float)((float)(i+1)/((float)pts.size()+2)));
         glVertex2f(pts[i].first,pts[i].second);
+//        glColor4
     }
     glEnd();
 }

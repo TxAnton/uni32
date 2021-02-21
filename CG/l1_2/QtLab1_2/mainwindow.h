@@ -2,6 +2,7 @@
 #define MAINWINDOW_H
 
 #include <QMainWindow>
+#include <QSlider>
 
 
 #include "customgl.h"
@@ -25,6 +26,7 @@ private:
 
     QHBoxLayout *sideslayout;
     QVBoxLayout *vertlayout;
+    QVBoxLayout *controlslayout;
     QHBoxLayout *buttonslayout;
 
     QWidget *central_widget;
@@ -40,6 +42,17 @@ private:
     QSpinBox* spinBox;
 
     QComboBox* geo_type;
+
+    QComboBox* alpha_type;
+    QSlider* alpha_slider;
+
+    QSlider* sc_x_slider;
+    QSlider* sc_y_slider;
+
+    QComboBox* sfactor_type;
+    QComboBox* dfactor_type;
+
+
 
 private slots:
   void handleButton();
