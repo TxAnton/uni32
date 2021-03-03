@@ -45,7 +45,6 @@ MainWindow::MainWindow(QWidget *parent) :
     //ALPHA
     alpha_type = new QComboBox();
 
-    alpha_typ/*
     geo_type->addItem("GL_POINTS");
     geo_type->addItem("GL_LINES");
     geo_type->addItem("GL_LINE_LOOP");

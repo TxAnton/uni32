@@ -8,7 +8,9 @@ class Interpolator
 {
 public:
     Interpolator();
-    Interpolator(std::vector<std::pair<double,double>>& points);
+    Interpolator(std::vector<std::pair<double,double>>& _points);
+
+    void setPoints(std::vector<std::pair<double,double>>& _points);
 
     double f(double x);
 

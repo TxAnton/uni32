@@ -1,5 +1,58 @@
 #include "customgl.h"
 
+
+std::pair<double, double> CustomGL::_coordScreenToGl(int x, int y)
+{
+    // Turn upside down
+    y = h - y + 1;
+
+    // Turn into double
+    double _xf = x;
+    double _yf = y;
+
+    // Origin to center
+    _xf -= ((double)w)/2;
+    _yf -= ((double)h)/2;
+
+    // Scale to relative (-1..1)
+    _xf /= ((double)w)/2;
+    _yf /= ((double)h)/2;
+
+    // Clamp
+    if(_xf > 1.0)_xf = 1.0;
+    if(_xf < -1.0)_xf = -1.0;
+    if(_yf > 1.0)_yf = 1.0;
+    if(_yf < -1.0)_yf = -1.0;
+
+    return {_xf,_yf};
+}
+
+std::pair<int, int> CustomGL::_coordGlToScreen(double x, double y)
+{
+    // Scale to absolute (-w/2, w/2)
+    x *= ((double)w)/2;
+    y *= ((double)h)/2;
+
+    // Origin to top left
+    x += ((double)w)/2;
+    y += ((double)h)/2;
+
+    //Turn into integer
+    int _xd = x;
+    int _yd = y;
+
+    // Turn upside down
+    _yd = h - _yd + 1;
+
+    // Clamp
+    if(_xd > w)_xd = w;
+    if(_xd < 0)_xd = 0;
+    if(_yd > h)_yd = h;
+    if(_yd < 0)_yd = 0;
+
+    return {_xd,_yd};
+}
+
 void CustomGL::slSetGeometryType(int typ)
 {
     this->geomType = typ + GL_POINTS;
@@ -18,37 +71,23 @@ void CustomGL::slSetAlphaVal(int value)
 {
 
     this->alphaVal = (float)((float)value+1)/100.0f;
-//    qDebug()<<"AlphaVal set to "<<value<<endl;
+    //    qDebug()<<"AlphaVal set to "<<value<<endl;
     paintGL();
 }
 
 void CustomGL::slSetScX(int value)
 {
-//    qDebug()<<"Sc x set to "<<value<<endl;
+    //    qDebug()<<"Sc x set to "<<value<<endl;
     xSc = (value+1)/100.0f;
     paintGL();
 }
 
 void CustomGL::slSetScY(int value)
 {
-//    qDebug()<<"Sc y set to "<<value<<endl;
+    //    qDebug()<<"Sc y set to "<<value<<endl;
     ySc = (value+1)/100.0f;
     paintGL();
 }
-
-/*
-#define GL_ZERO					0
-#define GL_ONE					1
-#define GL_SRC_COLOR				0x0300
-#define GL_ONE_MINUS_SRC_COLOR			0x0301
-#define GL_SRC_ALPHA				0x0302
-#define GL_ONE_MINUS_SRC_ALPHA			0x0303
-#define GL_DST_ALPHA				0x0304
-#define GL_ONE_MINUS_DST_ALPHA			0x0305
-#define GL_DST_COLOR				0x0306
-#define GL_ONE_MINUS_DST_COLOR			0x0307
-#define GL_SRC_ALPHA_SATURATE			0x0308
-*/
 
 void CustomGL::slSetSfactorType(int typ)
 {
@@ -72,6 +111,95 @@ void CustomGL::slSetDfactorType(int typ)
     paintGL();
 }
 
+// Public
+
+bool CustomGL::checkPressOnDot(double x, double y)
+{
+    int index = -1;
+    for(CPoint dot : pts) {
+        index++;
+        //qDebug() << x << " " << dot.x() - (d_size/2) << " " << y << " " << dot.y() + (d_size/2);
+        if(     (x >= (dot.first  - _SC_TO_GL_X(d_size/2)))
+            &&  (y >= (dot.second - _SC_TO_GL_Y(d_size/2)))
+            &&  (x <= (dot.first  + _SC_TO_GL_X(d_size/2)))
+            &&  (y <= (dot.second + _SC_TO_GL_Y(d_size/2))) )
+        {
+
+            cur_dot = index;                                    //если нашла такую точку, запоминаем ее индекс в векторе
+            return true;
+        }else{
+            qDebug()<<"x: "<<x<<" dotX: "<<dot.first<<" dist: " <<_ABS(x-dot.first);
+        }
+    }
+    qDebug()<<"Miss! "<<_SC_TO_GL_X(d_size/2);
+    return false;                                               //иначе игнорируем
+}
+
+
+
+void CustomGL::mousePressEvent(QMouseEvent *event)
+{
+
+    qDebug() << "\nmousePress: " << event->x() << " " << event->y();
+    std::pair<double, double> mp = _coordScreenToGl(event->x(), event->y());
+    qDebug() << "mousePress: " << mp.first << " " << mp.second;
+//    std::pair<int, int> md = _coordGlToScreen(mp.first, mp.second);
+//    qDebug() << "mousePress: " << md.first << " " << md.second;
+
+    //    qDebug() << "mousePress: " << event->x() << " " << event->y();
+
+    auto glPoint = _coordScreenToGl(event->x(),event->y());
+    double x = glPoint.first;
+    double y = glPoint.second;
+
+    mouse_x = x;                                            //текущая позиция клика мыши
+    mouse_y = y;
+    if(checkPressOnDot(x, y)) {                                 //проверяем, что нажали по точке
+        dot_move = true;
+
+    }
+}
+
+void CustomGL::mouseReleaseEvent(QMouseEvent *event)
+{
+    auto glPoint = _coordScreenToGl(event->x(),event->y());
+    double x = glPoint.first;
+    double y = glPoint.second;
+
+    if(dot_move) {
+        dot_move = false; //для след раза
+        pts[cur_dot].first =x;//(pts[cur_dot].first  + (x - mouse_x)); //вектор перемещения
+        pts[cur_dot].second=y;//(pts[cur_dot].second + (y - mouse_y));
+        interp->setPoints(pts);
+//        update();
+        paintGL();
+//        paintGL();
+    }
+}
+
+void CustomGL::mouseMoveEvent(QMouseEvent *event)
+{
+    auto glPoint = _coordScreenToGl(event->x(),event->y());
+    double x = glPoint.first;
+    double y = glPoint.second;
+
+    assert(!std::isinf(x));
+    assert(!std::isinf(y));
+    mouse_x = x;                                            //текущая позиция клика мыши
+    mouse_y = y;
+
+    if(dot_move) {
+
+        pts[cur_dot].first =x;//(pts[cur_dot].first  + (x - mouse_x));  //вектор перемещения
+        pts[cur_dot].second=y;//(pts[cur_dot].second + (y - mouse_y));
+        interp->setPoints(pts);
+//        update();
+        paintGL();
+
+
+    }
+}
+
 CustomGL::CustomGL()
 {
 
@@ -85,22 +213,22 @@ CustomGL::CustomGL()
     pts.push_back({.3,.3});
     pts.push_back({.6,-.3});
 
-//    pts.push_back({0.0,.9}); //T
-//    pts.push_back({-.6,-.5});//BL
-//    pts.push_back({.6,.5});  //TR
-//    pts.push_back({-.6,.5}); //TL
-//    pts.push_back({.6,-.5}); //BR
-//    pts.push_back({0.0,.9}); //T
+    //    pts.push_back({0.0,.9}); //T
+    //    pts.push_back({-.6,-.5});//BL
+    //    pts.push_back({.6,.5});  //TR
+    //    pts.push_back({-.6,.5}); //TL
+    //    pts.push_back({.6,-.5}); //BR
+    //    pts.push_back({0.0,.9}); //T
 
-//    pts.push_back({0.0,.9}); //T
+    //    pts.push_back({0.0,.9}); //T
 
-//    pts.push_back({0.0,-.9});//B
+    //    pts.push_back({0.0,-.9});//B
 
     interp = new Interpolator(pts);
 
-//    for(double i = -.9; i < .6; i+=.1){
-//        qDebug() <<i<<" "<< this->interp->f(i);
-//    }
+    //    for(double i = -.9; i < .6; i+=.1){
+    //        qDebug() <<i<<" "<< this->interp->f(i);
+    //    }
 
 
     colors.push_back(std::make_tuple(0.0,1.0,0.0)); //T
@@ -110,32 +238,32 @@ CustomGL::CustomGL()
     colors.push_back(std::make_tuple(0.0,0.0,1.0)); //BR
     colors.push_back(std::make_tuple(0.0,1.0,0.0)); //T
 
-//    colors.push_back(std::make_tuple(1.0,0.0,0.0)); //BL
+    //    colors.push_back(std::make_tuple(1.0,0.0,0.0)); //BL
 
-//    colors.push_back(std::make_tuple(1.0,0.0,1.0)); //B
+    //    colors.push_back(std::make_tuple(1.0,0.0,1.0)); //B
 
-//    pts.push_back({0.0,.9}); //T
-//    pts.push_back({-.6,.5}); //TL
-//    pts.push_back({-.6,-.5});//BL
+    //    pts.push_back({0.0,.9}); //T
+    //    pts.push_back({-.6,.5}); //TL
+    //    pts.push_back({-.6,-.5});//BL
 
-//    pts.push_back({0.0,-.9});//B
-//    pts.push_back({.6,-.5}); //BR
-//    pts.push_back({.6,.5});  //TR
+    //    pts.push_back({0.0,-.9});//B
+    //    pts.push_back({.6,-.5}); //BR
+    //    pts.push_back({.6,.5});  //TR
 
-//    colors.push_back(std::make_tuple(0.0,1.0,0.0)); //T
-//    colors.push_back(std::make_tuple(1.0,1.0,0.0)); //TL
-//    colors.push_back(std::make_tuple(1.0,0.0,0.0)); //BL
+    //    colors.push_back(std::make_tuple(0.0,1.0,0.0)); //T
+    //    colors.push_back(std::make_tuple(1.0,1.0,0.0)); //TL
+    //    colors.push_back(std::make_tuple(1.0,0.0,0.0)); //BL
 
-//    colors.push_back(std::make_tuple(1.0,0.0,1.0)); //B
-//    colors.push_back(std::make_tuple(0.0,0.0,1.0)); //BR
-//    colors.push_back(std::make_tuple(0.0,1.0,1.0)); //TR
+    //    colors.push_back(std::make_tuple(1.0,0.0,1.0)); //B
+    //    colors.push_back(std::make_tuple(0.0,0.0,1.0)); //BR
+    //    colors.push_back(std::make_tuple(0.0,1.0,1.0)); //TR
 }
 
 void CustomGL::initializeGL()
 {
     this->qglClearColor(QColor(100,100,100,100));
-//    this->qglClearColor(QColor(000,000,000,100));
-//    this->qglClearColor(QColor(255,255,255,100));
+    //    this->qglClearColor(QColor(000,000,000,100));
+    //    this->qglClearColor(QColor(255,255,255,100));
 }
 
 void CustomGL::resizeGL(int nWidth, int nHeight)
@@ -143,16 +271,16 @@ void CustomGL::resizeGL(int nWidth, int nHeight)
     if(nHeight==0)nHeight=1;
     w=nWidth;h=nHeight;
     glViewport(0,0,nWidth,nHeight);
-//    glMatrixMode(GL_PROJECTION);
-//    glLoadIdentity();
-//    glMatrixMode(GL_MODELVIEW);
+    //    glMatrixMode(GL_PROJECTION);
+    //    glLoadIdentity();
+    //    glMatrixMode(GL_MODELVIEW);
 }
 
 void CustomGL::paintGL()
 {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-//    glMatrixMode(GL_PROJECTION);
-//    glLoadIdentity();
+    //    glMatrixMode(GL_PROJECTION);
+    //    glLoadIdentity();
     scene();
     swapBuffers();
 
@@ -200,58 +328,70 @@ void CustomGL::scene()
     }
 */
 
-//    glEnable(GL_BLEND);
-//    glBlendFunc(sfactorType, dfactorType);
+    //    glEnable(GL_BLEND);
+    //    glBlendFunc(sfactorType, dfactorType);
 
-//    glEnable(GL_SCISSOR_TEST);
-//    glScissor(w*xSc,h*ySc,w*(1-xSc),h*(1-ySc));
+    //    glEnable(GL_SCISSOR_TEST);
+    //    glScissor(w*xSc,h*ySc,w*(1-xSc),h*(1-ySc));
 
-//    glEnable(GL_ALPHA_TEST);
-//    glAlphaFunc(alphaType, alphaVal);
+    //    glEnable(GL_ALPHA_TEST);
+    //    glAlphaFunc(alphaType, alphaVal);
 
     drawGeometry(geomType);
 
-//    glDisable(GL_ALPHA_TEST);
+    //    glDisable(GL_ALPHA_TEST);
 
-//    glDisable(GL_SCISSOR_TEST);
+    //    glDisable(GL_SCISSOR_TEST);
 
-//    glDisable(GL_BLEND);
+    //    glDisable(GL_BLEND);
     return;
 }
 
 void CustomGL::drawGeometry(int typ)
 {
-    glPointSize(12.0f);
-    glLineWidth(12.0f);
+    glPointSize((float)d_size);
+    glLineWidth((float)l_size);
 
-    double mrg = .01;//(this->interp->MaxX() - this->interp->MinX()) / (double)this->steps;
+    glColor3f(.2,.2,.99);
+    double mrg = (this->interp->MaxX() - this->interp->MinX()) / (double)this->steps;
+    mrg = _ABS(mrg);
 
-//    double _x = this->interp->MinX();
+    //    double _x = this->interp->MinX();
     double _y;// = this->interp->f(_x);
-//    glVertex2f(_x,_y);
-    qDebug()<<"MinMax " <<this->interp->MinX()<<" "<<this->interp->MaxX();
+    //    glVertex2f(_x,_y);
+//    qDebug()<<"MinMax " <<this->interp->MinX()<<" "<<this->interp->MaxX();
     glBegin(GL_LINE_STRIP);
-//    glVertex2f(pts.front().first,pts.front().second);
-//    glVertex2f(pts.back().first,pts.back().second);
-    qDebug()<<mrg;
-    for(auto i = this->interp->MinX(); i <this->interp->MaxX(); i+=mrg/2){
-//        _x+=mrg;
-        _y == this->interp->f(i);
-        glVertex2f(i,this->interp->f(i));
-        qDebug() <<i<<" "<< _y;
+    //    glVertex2f(pts.front().first,pts.front().second);
+    //    glVertex2f(pts.back().first,pts.back().second);
+//    qDebug()<<mrg;
+    for(auto i = this->interp->MinX(); i <=this->interp->MaxX(); i+=mrg){
+        //        _x+=mrg;
+        _y = this->interp->f(i);
+        glVertex2f(i,_y);
+//        qDebug() <<i<<" "<< _y;
     }
     glEnd();
 
+    glColor3f(.99,.2,.2);
+    glBegin(GL_POINTS);
+    for(CPoint dot : pts) {
+        glVertex2f(dot.first, dot.second);
+    }
 
-//    glPointSize(12.0f);
-//    glLineWidth(12.0f);
-//    glBegin(typ);
-//    for(int i = 0; i < pts.size();i++){
-//        glColor4f(std::get<0>(colors[i]), std::get<1>(colors[i]), std::get<2>(colors[i]),(float)((float)(i+1)/((float)pts.size()+2)));
-//        glVertex2f(pts[i].first,pts[i].second);
-////        glColor4
-//    }
-//    glEnd();
+    glEnd();
+
+
+
+
+    //    glPointSize(12.0f);
+    //    glLineWidth(12.0f);
+    //    glBegin(typ);
+    //    for(int i = 0; i < pts.size();i++){
+    //        glColor4f(std::get<0>(colors[i]), std::get<1>(colors[i]), std::get<2>(colors[i]),(float)((float)(i+1)/((float)pts.size()+2)));
+    //        glVertex2f(pts[i].first,pts[i].second);
+    ////        glColor4
+    //    }
+    //    glEnd();
 }
 
 /*
