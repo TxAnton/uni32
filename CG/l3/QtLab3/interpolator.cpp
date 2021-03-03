@@ -8,13 +8,12 @@ Interpolator::Interpolator()
 Interpolator::Interpolator(std::vector<std::pair<double, double> > &_points)
 {
     this->points = _points;
-//    std::sort(this->points.begin(),this->points.end(),Interpolator::_points_x_cmp);
+
 }
 
 void Interpolator::setPoints(std::vector<std::pair<double, double> > &_points)
 {
     this->points = _points;
-//    std::sort(this->points.begin(),this->points.end(),Interpolator::_points_x_cmp);
 }
 
 double Interpolator::f(double x)

@@ -14,7 +14,6 @@ MainWindow::MainWindow(QWidget *parent) :
     central_widget = new QWidget;
 
     cGL = new CustomGL();
-//    cGL->slSetGeometryType(GL_POINTS);
 
     sc_x_slider = new QSlider(Qt::Horizontal, this);
     buttonslayout->addWidget(this->sc_x_slider);
