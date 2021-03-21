@@ -191,7 +191,7 @@ void CustomGL::drawIter(int n)
     if(n==0){
         cnt++;
 //        glColor3d(cnt%3==0,cnt%3==1,cnt%3==2);
-//        glLineWidth((float)dw*10000);
+//        glLineWidth((float)dw);
 //        glBegin(GL_LINES);
 //            glVertex2d(0,-dl/2);
 //            glVertex2d(0,dl/2);
