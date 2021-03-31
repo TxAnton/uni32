@@ -64,7 +64,7 @@ void CustomGL::slSetNSegments(int value)
 
 void CustomGL::slTimerUpdate()
 {
-    texoffset+=0.01f+(0.0001f*nSegments);
+    texoffset+=0.01f+(0.001f*(nSegments-50));
     updateGL();
 //    paintGL();
 
@@ -156,15 +156,13 @@ CustomGL::CustomGL()
 
          qDebug() << ("Failed to load texture");
     }
-//    stbi_image_free(texdata);
-
 }
 
 void CustomGL::initializeGL()
 {
     this->qglClearColor(QColor(100,100,100,100));
     initShaders();
-    //    glViewport(0,0,800,800);
+
 }
 
 void CustomGL::resizeGL(int nWidth, int nHeight)
@@ -172,16 +170,7 @@ void CustomGL::resizeGL(int nWidth, int nHeight)
 
     if(nHeight==0)nHeight=1;
     w=nWidth;h=nHeight;
-    //        glViewport(0,0,nWidth,nHeight);
     glMatrixMode(GL_PROJECTION);
-//    glLoadIdentity();
-////    pmvMatrix;
-////    pmvMatrix.ortho();
-////    glOrtho(pmvMatrix.)
-////    pmvMatrix.ortho(-w/2, w/2, -h/2, h/2, -w, w);
-//    pmvMatrix.ortho(-1.0,1.0,-1.0,1.0,-1.0,1.0);
-//    glOrtho(-1.0,1.0,-1.0,1.0,-1.0,1.0);
-//    pmvMatrix.viewport(0, 0, w, h);
 
     glViewport(0, 0, w, h);
     glMatrixMode(GL_MODELVIEW);
@@ -202,41 +191,8 @@ void CustomGL::paintGL()
 //    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 
 
-/* //рисуем статичные оси координат
-    glBegin(GL_LINES);
-    //glColor3ub(255, 255, 255);
-    glVertex3f(-300, 0, 0);
-    glVertex3f(300, 0, 0);
-    glVertex3f(0, -300, 0);
-    glVertex3f(0, 300, 0);
-    glVertex3f(0, 0, -300);
-    glVertex3f(0, 0, 300);
-    glEnd();
-    //подписи к ним
-    renderText(270, 0, 0, "X");
-    renderText(0, 270, 0, "Y");
-    renderText(0, 0, 270, "Z");
-*/
     shaderProgram->bind();
-/*  //    стол
-    glBegin(GL_TRIANGLE_STRIP);
-    //glColor3ub(167, 58, 13);
-    glVertex3f(10, 0, 10);
-    glTexCoord2f(1,1);
-    glVertex3f(10, 0, -10);
-    glTexCoord2f(1,0);
-    glVertex3f(-10, 0, 10);
-    glTexCoord2f(0,1);
-    glVertex3f(-10, 0, -10);
-    glTexCoord2f(0,0);
-    glEnd();
-    pmvMatrix.setToIdentity();
-    glLoadIdentity();
-*/
 
-//    Загрузка и генерация текстур
-//    unsigned int texture_n;
-//    glGenTextures(1, &texture_n);
     glBindTexture(GL_TEXTURE_2D, texture_n);
 
     // Устанавливаем параметры наложения и фильтрации текстур (для текущего связанного объекта текстуры)
@@ -246,22 +202,16 @@ void CustomGL::paintGL()
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
 
-    // Загрузка и генерация текстуры
-//    int texwidth, texheight, texnrChannels;
-//    texdata = stbi_load("img.jpg", &texwidth, &texheight, &texnrChannels, 0);
+    // Бинд текстуры
+
     if (texdata)
     {
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, texwidth, texheight, 0, GL_RGB, GL_UNSIGNED_BYTE, texdata);
-
-//        glGenerateMipmap(GL_TEXTURE_2D);
     }
     else
     {
-
          qDebug() << ("Failed to load texture");
     }
-//    stbi_image_free(texdata);
-//    glBindTexture(GL_TEXTURE_2D, texture_n);
 
     //Рисуем шейдером
 
@@ -289,12 +239,6 @@ void CustomGL::paintGL()
         0.0f, 1.0f,    // верхняя левая
     };
 
-
-
-
-//    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(6 * sizeof(float)));
-//    glEnableVertexAttribArray(2);
-
     GLfloat quad[] = {
         -0.5f,  -0.5f,  -0.5f,
         -0.5f, 0.5f, -0.5f,
@@ -307,10 +251,9 @@ void CustomGL::paintGL()
         1.0f, 1.0f,
         0.0f, 1.0f,
     };
-//    attribute highp vec4 qt_Vertex;
-//    attribute highp vec4 qt_Color;
-//    attribute highp vec2 qt_TexC;
+
     pmvMatrix.setToIdentity();
+    //Эти две строчки чтобы вращать картинку
 //    pmvMatrix.translate(0,0,cameraDistance/50.0f);
 //    pmvMatrix.rotate(QQuaternion::fromEulerAngles((alpha)/M_PI*180,(theta)/M_PI*180,90));
     pmvMatrix.scale(2);
@@ -328,9 +271,7 @@ void CustomGL::paintGL()
     shaderProgram->setAttributeArray(vertexLoc,vertexes,3);
     shaderProgram->setAttributeArray(colorLoc,colors,3);
     shaderProgram->setAttributeArray(textureLoc,textCoord,2);
-//    GLfloat offset = clock()/100000.0f;
-//    texoffset = time(0)/10000000.0f;
-//    qDebug() << texoffset;
+
     shaderProgram->setUniformValue(offsetLoc,texoffset);
 
     shaderProgram->enableAttributeArray(vertexLoc);
@@ -343,15 +284,14 @@ void CustomGL::paintGL()
     shaderProgram->disableAttributeArray(colorLoc);
 
     shaderProgram->release();
-//    shaderProgram->setAttributeArray();
 
-        pmvMatrix.setToIdentity();
-        glLoadIdentity();
+    pmvMatrix.setToIdentity();
+    glLoadIdentity();
 
     swapBuffers();
     glFlush();
 
-
+//    glVertex2d();
 }
 
 void CustomGL::scene()

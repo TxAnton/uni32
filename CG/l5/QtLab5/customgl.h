@@ -89,8 +89,6 @@ public:
     void paintGL();
     void scene();
 
-
-
     void drawSquare();
     void drawGeometry();
 
