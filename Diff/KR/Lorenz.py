@@ -44,11 +44,34 @@ def gen_points(init_vals=(10., 1., 1.05), num_steps=10000,dt=0.01,s=10,r=28,b=2.
 
     dots = [xs,ys,zs]
     return dots
+#по методу эйлера
+def gen_points_optimal(init_vals=(0., 1., 1.05), num_steps=10000, dt=0.01, s=10, r=28, b=2.667):
+    # Need one more for the initial values
+
+    xs = np.empty(num_steps + 1)
+    ys = np.empty(num_steps + 1)
+    zs = np.empty(num_steps + 1)
+
+    # Set initial values
+    xs[0], ys[0], zs[0] = init_vals
+
+    # Step through "time", calculating the partial derivatives at the current point
+    # and using them to estimate the next point
+    for i in range(num_steps):
+        x_dot, y_dot, z_dot = lorenz(xs[i], ys[i], zs[i], s, r, b)
+        xs[i + 1] = xs[i] + (dt/2) * (x_dot ) #x_1=x_0+h*f(x_0, y_0, z_0)
+        ys[i + 1] = ys[i] + (y_dot * dt)
+        zs[i + 1] = zs[i] + (z_dot * dt)
+        x_dot2, y_dot2, z_dot2 = lorenz(xs[i + 1], ys[i + 1], zs[i + 1], s, r, b)
+        xs[i + 1] = xs[i] + (dt/2) * (x_dot + x_dot2)
+        ys[i + 1] = ys[i] + (dt/2) * (y_dot + y_dot2)
+        zs[i + 1] = zs[i] + (dt/2) * (z_dot + z_dot2)
+
+    dots = [xs, ys, zs]
+    return dots
 
 # Plot
-
-xs,ys,zs = gen_points(r=28,dt = 0.001,num_steps=100000)
-
+xs, ys, zs = gen_points_optimal()
 fig = plt.figure()
 ax = fig.gca(projection='3d')
 
@@ -59,4 +82,4 @@ ax.set_zlabel("Z Axis")
 ax.set_title("Lorenz Attractor")
 
 plt.show()
-plt.savefig('Lorenz Attractor')
+#plt.savefig('Lorenz Attractor')
