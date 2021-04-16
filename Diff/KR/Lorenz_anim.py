@@ -21,7 +21,7 @@ def update(num, data, line):
     line.set_3d_properties(data[2, :num])
 
 N = 10000
-data = np.array(list(gen_points(num_steps=N)))
+data = np.array(list(gen_points(num_steps=N,r=16)))
 line, = ax.plot(data[0, 0:1], data[1, 0:1], data[2, 0:1])
 
 # Setting the axes properties
@@ -34,6 +34,6 @@ ax.set_ylabel('Y')
 ax.set_zlim3d([10.0, 50.0])
 ax.set_zlabel('Z')
 
-ani = animation.FuncAnimation(fig, update, N, fargs=(data, line), interval=1/N, blit=False)
+ani = animation.FuncAnimation(fig, update, N, fargs=(data, line), interval=100/N, blit=False)
 # ani.save('matplot003.gif', writer='imagemagick')
 plt.show()

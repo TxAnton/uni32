@@ -20,11 +20,11 @@ def lorenz(x, y, z, s=10, r=28, b=2.667):
     z_dot = x*y - b*z
     return x_dot, y_dot, z_dot
 
-# dt = 0.0248872675
-dt = 0.01
-num_steps = 10000
+# # dt = 0.0248872675
+# dt = 0.01
+# num_steps = 10000
 
-def gen_points(init_vals=(0., 1., 1.05), num_steps=10000,dt=0.01,s=10,r=28,b=2.667):
+def gen_points(init_vals=(10., 1., 1.05), num_steps=10000,dt=0.01,s=10,r=28,b=2.667):
     # Need one more for the initial values
 
     xs = np.empty(num_steps + 1)
@@ -46,7 +46,9 @@ def gen_points(init_vals=(0., 1., 1.05), num_steps=10000,dt=0.01,s=10,r=28,b=2.6
     return dots
 
 # Plot
-"""
+
+xs,ys,zs = gen_points(r=28,dt = 0.001,num_steps=100000)
+
 fig = plt.figure()
 ax = fig.gca(projection='3d')
 
@@ -58,4 +60,3 @@ ax.set_title("Lorenz Attractor")
 
 plt.show()
 plt.savefig('Lorenz Attractor')
-"""

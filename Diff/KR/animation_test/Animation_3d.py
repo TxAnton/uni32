@@ -1,3 +1,4 @@
+#https://stackoverflow.com/questions/38118598/3d-animation-using-matplotlib
 from matplotlib import pyplot as plt
 import numpy as np
 import mpl_toolkits.mplot3d.axes3d as p3
@@ -31,5 +32,6 @@ ax.set_zlim3d([0.0, 10.0])
 ax.set_zlabel('Z')
 
 ani = animation.FuncAnimation(fig, update, N, fargs=(data, line), interval=10000/N, blit=False)
-#ani.save('matplot003.gif', writer='imagemagick')
+# ani.save('matplot003.gif')#, writer='imagemagick'
+ani.save('matplot003.mp4')#, writer='imagemagick'
 plt.show()
