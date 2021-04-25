@@ -3,7 +3,8 @@
 
 #include <QMainWindow>
 #include <QSlider>
-
+#include <QSplitter>
+#include <QCheckBox>
 
 #include "customgl.h"
 
@@ -27,11 +28,11 @@ private:
     QHBoxLayout *sideslayout;
     QVBoxLayout *vertlayout;
 
-    QHBoxLayout *buttonslayout;
+    QVBoxLayout *buttonslayout;
 
     QWidget *central_widget;
 
-    QSlider* sc_x_slider;
+//    QSlider* n_seg_slider;
 
     QTimer *timer;
 

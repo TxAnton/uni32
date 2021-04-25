@@ -57,11 +57,100 @@ std::pair<int, int> CustomGL::_coordGlToScreen(double x, double y)
 
 void CustomGL::slSetNSegments(int value)
 {
+    qDebug()<<"slSetNSegments";
     nSegments = value;
     texoffset = (nSegments/100.0f)-.5f;
     //    steps = nSegments;
     paintGL();
 }
+
+void CustomGL::slSetWireframe(bool value)
+{
+    qDebug()<<"slSetWireframe";
+    isWireframe = value;
+    paintGL();
+}
+
+void CustomGL::slSetFrustum(bool value)
+{
+    qDebug()<<"slSetFrustum"<<value;
+    isFrustum=value;
+    paintGL();
+}
+
+void CustomGL::slSetSS(int value)
+{
+    qDebug()<<"slSetSS";
+    ss = value;
+    getIco(ss);
+    paintGL();
+}
+
+void CustomGL::slSetEulerX(int value)
+{
+    qDebug()<<"slSetEulerX";
+    eulerRotation.setX(value/100.0f*180.0f);
+    paintGL();
+}
+
+void CustomGL::slSetEulerY(int value)
+{
+    qDebug()<<"slSetEulerY";
+    eulerRotation.setY(value/100.0f*180.0f);
+    paintGL();
+}
+
+void CustomGL::slSetEulerZ(int value)
+{
+    qDebug()<<"slSetEulerZ";
+    eulerRotation.setZ(value/100.0f*180.0f);
+    paintGL();
+}
+
+void CustomGL::slSetTrX(int value)
+{
+    qDebug()<<"slSetTrX";
+    translation.setX(value);
+    paintGL();
+}
+
+void CustomGL::slSetTrY(int value)
+{
+    qDebug()<<"slSetTrY";
+    translation.setY(value);
+    paintGL();
+}
+
+void CustomGL::slSetTrZ(int value)
+{
+    qDebug()<<"slSetTrZ";
+    translation.setZ(value);
+    paintGL();
+}
+
+void CustomGL::slSetScX(int value)
+{
+    qDebug()<<"slSetScX";
+    scale.setX(pow(2,value-50));
+    paintGL();
+}
+
+void CustomGL::slSetScY(int value)
+{
+    qDebug()<<"slSetScY";
+    scale.setY(pow(2,value-50));
+    paintGL();
+}
+
+void CustomGL::slSetScZ(int value)
+{
+    qDebug()<<"slSetScZ";
+    scale.setZ(pow(2,value-50));
+    paintGL();
+}
+
+
+
 
 void CustomGL::slTimerUpdate()
 {
@@ -137,6 +226,11 @@ CustomGL::CustomGL()
     light_source = QVector3D(+2,+2,+1);
     light_intensity = 1;
 
+    scale = {.2,.2,.2};
+    eulerRotation={0,0,0};
+    translation={0,0,0};
+
+
     glGenTextures(1, &texture_n);
     glBindTexture(GL_TEXTURE_2D, texture_n);
 
@@ -166,7 +260,7 @@ void CustomGL::initializeGL()
 {
     this->qglClearColor(QColor(100,100,100,100));
     initShaders();
-    getIco();
+    getIco(0);
 }
 
 void CustomGL::resizeGL(int nWidth, int nHeight)
@@ -184,6 +278,12 @@ void CustomGL::resizeGL(int nWidth, int nHeight)
 void CustomGL::paintGL()
 {
     glEnable(GL_DEPTH_TEST);
+    if(isWireframe){
+        glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+    }else{
+        glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+    }
+
     scene();
 
 
@@ -194,6 +294,32 @@ void CustomGL::scene()
 {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+    qDebug()<<"FR"<<isFrustum;
+
+
+
+    if(isWireframe){
+        glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+    }else{
+        glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+    }
+
+    pmvMatrix.setToIdentity();
+    //Эти две строчки чтобы вращать картинку
+    pmvMatrix.translate(0,0,cameraDistance/50.0f);
+    pmvMatrix.rotate(QQuaternion::fromEulerAngles((alpha)/M_PI*180,(theta)/M_PI*180,0));
+    //    pmvMatrix.scale(.2);
+
+        if(isFrustum){
+//            pmvMatrix.perspective(45,2,-10,20);
+           pmvMatrix.frustum(-.20,.20,-.20,.20,-.20,.20);
+
+        }else{
+            pmvMatrix.ortho(-2,2,-2,2,-2,2);
+        }
+
+
+    drawAxis();
     //    drawGeometry();
     drawIco();
 
@@ -343,6 +469,11 @@ void CustomGL::drawGeometry()
 */
 void CustomGL::drawIco()
 {
+    auto m = pmvMatrix;
+
+    pmvMatrix.rotate(QQuaternion::fromEulerAngles(eulerRotation));
+    pmvMatrix.scale(scale);
+    pmvMatrix.translate(translation);
 
 
     float x = cameraDistance * cos(alpha) * sin(theta);
@@ -376,11 +507,7 @@ void CustomGL::drawIco()
         qDebug() << ("Failed to load texture");
     }
 
-    pmvMatrix.setToIdentity();
-    //Эти две строчки чтобы вращать картинку
-    pmvMatrix.translate(0,0,cameraDistance/50.0f);
-    pmvMatrix.rotate(QQuaternion::fromEulerAngles((alpha)/M_PI*180,(theta)/M_PI*180,0));
-    pmvMatrix.scale(.2);
+
     //    pmvMatrix.rotate(QQuaternion::fromEulerAngles(0,0,90));
 
     int matrixLoc = shaderProgram->uniformLocation("qt_ModelViewProjectionMatrix");
@@ -402,12 +529,13 @@ void CustomGL::drawIco()
     //    shaderProgram->setAttributeArray(textureLoc,textCoord,2);
     shaderProgram->setUniformValue(lightLoc, QVector4D(light_source,light_intensity));
     shaderProgram->setUniformValue(offsetLoc,(nSegments/100.0f)-.5f);
-//    qDebug()<< (nSegments/100.0f)-.5f;
+    //    qDebug()<< (nSegments/100.0f)-.5f;
 
     shaderProgram->enableAttributeArray(vertexLoc);
     shaderProgram->enableAttributeArray(textureLoc);
     shaderProgram->enableAttributeArray(colorLoc);
     shaderProgram->enableAttributeArray(normalLoc);
+
     glDrawArrays(GL_TRIANGLES,0,faces.size()*3);
 
     shaderProgram->disableAttributeArray(vertexLoc);
@@ -417,6 +545,106 @@ void CustomGL::drawIco()
 
     shaderProgram->release();
 
+    pmvMatrix = m;
+}
+
+void CustomGL::drawAxis()
+{
+    float x = cameraDistance * cos(alpha) * sin(theta);
+    float y = cameraDistance * sin(alpha);
+    float z = cameraDistance * cos(alpha) * cos(theta);
+    //    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);//GL_TEXTURE_WRAP_S
+    //    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_MIRRORED_REPEAT);
+    //    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    //    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+
+
+    shaderProgram->bind();
+
+    glBindTexture(GL_TEXTURE_2D, texture_n);
+
+    // Устанавливаем параметры наложения и фильтрации текстур (для текущего связанного объекта текстуры)
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+
+    // Бинд текстуры
+
+    if (texdata)
+    {
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, texwidth, texheight, 0, GL_RGB, GL_UNSIGNED_BYTE, texdata);
+    }
+    else
+    {
+        qDebug() << ("Failed to load texture");
+    }
+    glLineWidth(5.0f);
+    //Рисуем шейдером
+
+    GLfloat vertexes[] = {
+        // координаты
+        -2000.0f,  0.0f, 0.0f, // верхняя правая
+        2000.0f, 0.0f, 0.0f, // нижняя правая
+        0.0f, -2000.0f, 0.0f, // нижняя левая
+        0.0f,  2000.0f, 0.0f, // верхняя левая
+        0.0f, 0.0f, -2000.0f, // нижняя левая
+        0.0f,  0.0f, 2000.0f, // верхняя левая
+    };
+
+    GLfloat colors[] = {
+        // цвета            // текстурные координаты
+        1.0f, 0.0f, 0.0f,   // верхняя правая
+        1.0f, 0.0f, 0.0f,   // нижняя правая
+        0.0f, 1.0f, 0.0f,   // нижняя левая
+        0.0f, 1.0f, 0.0f,   // верхняя левая
+        0.0f, 0.0f, 1.0f,   // нижняя левая
+        0.0f, 0.0f, 1.0f,   // верхняя левая
+    };
+
+    GLfloat textCoord[] = {
+        0.0f, 0.0f,
+        1.0f, 0.0f,
+        1.0f, 1.0f,
+        0.0f, 1.0f,
+        1.0f, 1.0f,
+        0.0f, 1.0f,
+    };
+
+    //    pmvMatrix.setToIdentity();
+    //    //Эти две строчки чтобы вращать картинку
+    //    pmvMatrix.translate(0,0,cameraDistance/50.0f);
+    //    pmvMatrix.rotate(QQuaternion::fromEulerAngles((alpha)/M_PI*180,(theta)/M_PI*180,90));
+    //    pmvMatrix.scale(2);
+    //    //    pmvMatrix.rotate(QQuaternion::fromEulerAngles(0,0,90));
+
+    int matrixLoc = shaderProgram->uniformLocation("qt_ModelViewProjectionMatrix");
+    int vertexLoc = shaderProgram->attributeLocation("qt_Vertex");
+    int colorLoc = shaderProgram->attributeLocation("qt_Color");
+    int textureLoc = shaderProgram->attributeLocation("qt_TexC");
+    int offsetLoc = shaderProgram->uniformLocation("uoffset");
+
+    shaderProgram->bind();
+    shaderProgram->setUniformValue(matrixLoc,pmvMatrix);
+
+    shaderProgram->setAttributeArray(vertexLoc,vertexes,3);
+    shaderProgram->setAttributeArray(colorLoc,colors,3);
+    shaderProgram->setAttributeArray(textureLoc,textCoord,2);
+
+    shaderProgram->setUniformValue(offsetLoc,texoffset);
+
+    shaderProgram->enableAttributeArray(vertexLoc);
+    shaderProgram->enableAttributeArray(textureLoc);
+    shaderProgram->enableAttributeArray(colorLoc);
+    glDrawArrays(GL_LINES,0,6);
+
+    shaderProgram->disableAttributeArray(vertexLoc);
+    shaderProgram->disableAttributeArray(textureLoc);
+    shaderProgram->disableAttributeArray(colorLoc);
+
+    shaderProgram->release();
+    glLineWidth(1.0f);
 
 }
 
@@ -432,10 +660,20 @@ void CustomGL::updateLighting()
 
 void CustomGL::getIco(int n)
 {
+    qDebug()<<"getIco "<<n;
 
     double t = (1.0 + std::sqrt(5.0)) / 2.0;
     //    GLfloat fl[3] = {-1,  t,  0};
     //    vertexes.push_back({-1,  t,  0});
+
+    _vertexes.clear();
+    vertexes.clear();
+    _colors.clear();
+    prime_colors.clear();
+    colors.clear();
+    normals.clear();
+    faces.clear();
+
 
     _vertexes.push_back({-1,  t,  0});
     _vertexes.push_back({ 1,  t,  0});
@@ -452,11 +690,8 @@ void CustomGL::getIco(int n)
     _vertexes.push_back({-t,  0, -1});
     _vertexes.push_back({-t,  0,  1});
 
-    for(int i=0 ;i<_vertexes.size();i++){
-        //        colors.push_back({.5f,.5f,.5f});
-        _colors.push_back({(GLfloat)(i%3==0),(GLfloat)(i%3==1),(GLfloat)(i%3==2)});
-    }
-    //    faces.push_back({0, 11, 5});
+
+
 
     faces.push_back({0, 11, 5});
     faces.push_back({0, 5, 1});
@@ -485,7 +720,73 @@ void CustomGL::getIco(int n)
     faces.push_back({8, 6, 7});
     faces.push_back({9, 8, 1});
 
-    // Subdivide faces
+    //Subdivide faces
+    //    float len = faces[0];
+    for(int i=0; i<n ;i++){
+        std::list< std::list<std::tuple<GLuint ,GLuint ,GLuint>>::iterator > mark_delete;
+        std::list<std::tuple<GLuint ,GLuint ,GLuint>> _faces;
+        for(auto face = faces.begin(); face !=faces.end();face++){
+
+            GLuint x_v0 = std::get<0>(*face);
+            GLuint x_v1 = std::get<1>(*face);
+            GLuint x_v2 = std::get<2>(*face);
+
+            auto _v0 = _vertexes[x_v0];
+            auto _v1 = _vertexes[x_v1];
+            auto _v2 = _vertexes[x_v2];
+
+
+            QVector3D v0 = QVector3D(
+                        std::get<0>(_v0),
+                        std::get<1>(_v0),
+                        std::get<2>(_v0)
+                        );
+            QVector3D v1 = QVector3D(
+                        std::get<0>(_v1),
+                        std::get<1>(_v1),
+                        std::get<2>(_v1)
+                        );
+            QVector3D v2 = QVector3D(
+                        std::get<0>(_v2),
+                        std::get<1>(_v2),
+                        std::get<2>(_v2)
+                        );
+            float len = v0.length();
+
+            QVector3D v01 = (v0+v1)/2;
+            QVector3D v02 = (v0+v2)/2;
+            QVector3D v12 = (v1+v2)/2;
+
+            v01= v01.normalized()*len;
+            v02= v02.normalized()*len;
+            v12= v12.normalized()*len;
+
+            int ix = _vertexes.size();
+
+            _vertexes.push_back({v01.x(),v01.y(),v01.z()});
+            _vertexes.push_back({v02.x(),v02.y(),v02.z()});
+            _vertexes.push_back({v12.x(),v12.y(),v12.z()});
+
+            GLuint x_v01 = ix;
+            GLuint x_v02 = ix+1;
+            GLuint x_v12 = ix+2;
+
+            _faces.push_back({x_v0 ,x_v01,x_v02});
+            _faces.push_back({x_v01,x_v1 ,x_v12});
+            _faces.push_back({x_v01,x_v12,x_v02});
+            _faces.push_back({x_v02,x_v12,x_v2 });
+
+            mark_delete.push_back(face);
+
+        }
+        faces = _faces;
+    }
+
+    for(int i=0 ;i<_vertexes.size();i++){
+        //        colors.push_back({.5f,.5f,.5f});
+        _colors.push_back({(GLfloat)(i%3==0),(GLfloat)(i%3==1),(GLfloat)(i%3==2)});
+    }
+
 
     for(auto face: faces){
         //_vertexes[std::get<0>(face)
@@ -493,26 +794,26 @@ void CustomGL::getIco(int n)
         auto _v1 = _vertexes[std::get<1>(face)];
         auto _v2 = _vertexes[std::get<2>(face)];
         QVector3D v0 = QVector3D(
-                std::get<0>(_v0),
-                std::get<1>(_v0),
-                std::get<2>(_v0)
-                );
+                    std::get<0>(_v0),
+                    std::get<1>(_v0),
+                    std::get<2>(_v0)
+                    );
         QVector3D v1 = QVector3D(
-                std::get<0>(_v1),
-                std::get<1>(_v1),
-                std::get<2>(_v1)
-                );
+                    std::get<0>(_v1),
+                    std::get<1>(_v1),
+                    std::get<2>(_v1)
+                    );
         QVector3D v2 = QVector3D(
-                std::get<0>(_v2),
-                std::get<1>(_v2),
-                std::get<2>(_v2)
-                );
+                    std::get<0>(_v2),
+                    std::get<1>(_v2),
+                    std::get<2>(_v2)
+                    );
 
         auto u = v1-v0;
         auto v = v2-v0;
         auto n = QVector3D::crossProduct(v,u).normalized();
         //        if(QVector3D::dotProduct(QVector3D::crossProduct(u,v),v0)>0){
-        qDebug()<<n.x();
+//        qDebug()<<n.x();
 
         vertexes.push_back(_vertexes[std::get<0>(face)]);
         prime_colors.push_back(_colors[std::get<0>(face)]);
@@ -602,4 +903,5 @@ std::string CustomGL::readFile(std::string filename)
 
     return str;
 }
+
 

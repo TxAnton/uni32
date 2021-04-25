@@ -56,12 +56,21 @@ private:
 
     QMatrix4x4 pmvMatrix;
 
+
+
     double alpha = 0;
     double theta = 0;
 
     int w=1,h=1;
 
+
+    QVector3D eulerRotation;
+    QVector3D scale;
+    QVector3D translation;
     int nSegments = 0;
+    bool isFrustum = false;
+    bool isWireframe = false;
+    int ss = 1;
 
     int d_size = 15;                                     //координаты и размер точки
     float l_size = 10;                                     //координаты и размер точки
@@ -82,7 +91,7 @@ private:
     std::vector<std::tuple<GLfloat,GLfloat,GLfloat> > prime_colors;
     std::vector<std::tuple<GLfloat,GLfloat,GLfloat> > colors;
     std::vector<std::tuple<GLfloat,GLfloat,GLfloat> > normals;
-    std::vector<std::tuple<GLuint ,GLuint ,GLuint>> faces;
+    std::list<std::tuple<GLuint ,GLuint ,GLuint>> faces;
 
 
     QVector3D light_source;
@@ -101,6 +110,25 @@ private:
 
 public slots:
     void slSetNSegments(int value = 0);
+
+    void slSetWireframe(bool value = false);
+    void slSetFrustum(bool value = false);
+
+    void slSetSS(int value = 0);
+
+    void slSetEulerX(int value=0);
+    void slSetEulerY(int value=0);
+    void slSetEulerZ(int value=0);
+
+    void slSetTrX(int value = 0);
+    void slSetTrY(int value = 0);
+    void slSetTrZ(int value = 0);
+
+    void slSetScX(int value = 50);
+    void slSetScY(int value = 50);
+    void slSetScZ(int value = 50);
+
+
     void slTimerUpdate();
 
 public:
@@ -118,8 +146,9 @@ public:
     void drawSquare();
     void drawGeometry();
     void drawIco();
+    void drawAxis();
     void updateLighting();
-    void getIco(int n = 1);
+    void getIco(int n = 0);
 
 
     void initShaders();
