@@ -42,8 +42,7 @@ MainWindow::MainWindow(QWidget *parent) :
     //add sliders
     buttonslayout->addWidget(n_seg_slider);
     buttonslayout->addWidget(ss_slider);
-
-    buttonslayout->addWidget(new QSplitter(Qt::Horizontal));
+//    buttonslayout->addWidget(new QSplitter(Qt::Horizontal));
     buttonslayout->addWidget(eu_x_slider);
     buttonslayout->addWidget(eu_y_slider);
     buttonslayout->addWidget(eu_z_slider);

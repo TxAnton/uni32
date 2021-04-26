@@ -294,7 +294,7 @@ void CustomGL::scene()
 {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    qDebug()<<"FR"<<isFrustum;
+//    qDebug()<<"FR"<<isFrustum;
 
 
 
@@ -313,6 +313,7 @@ void CustomGL::scene()
         if(isFrustum){
 //            pmvMatrix.perspective(45,2,-10,20);
            pmvMatrix.frustum(-.20,.20,-.20,.20,-.20,.20);
+
 
         }else{
             pmvMatrix.ortho(-2,2,-2,2,-2,2);
