@@ -1,1 +1,3 @@
 ANN/sandbox/*
+*.idea/*
+*__pycache__/*
