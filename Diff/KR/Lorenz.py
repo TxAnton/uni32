@@ -52,8 +52,10 @@ def gen_points_optimal(init_vals=(0., 1., 1.05), num_steps=10000, dt=0.01, s=10,
     ys = np.empty(num_steps + 1)
     zs = np.empty(num_steps + 1)
 
+    ts = np.empty(num_steps + 1)
     # Set initial values
     xs[0], ys[0], zs[0] = init_vals
+    ts[0] = 0
 
     # Step through "time", calculating the partial derivatives at the current point
     # and using them to estimate the next point
@@ -66,12 +68,71 @@ def gen_points_optimal(init_vals=(0., 1., 1.05), num_steps=10000, dt=0.01, s=10,
         xs[i + 1] = xs[i] + (dt/2) * (x_dot + x_dot2)
         ys[i + 1] = ys[i] + (dt/2) * (y_dot + y_dot2)
         zs[i + 1] = zs[i] + (dt/2) * (z_dot + z_dot2)
+        ts[i + 1] = ts[i] + dt
 
-    dots = [xs, ys, zs]
+    dots = [xs, ys, zs, ts]
     return dots
 
 # Plot
-xs, ys, zs = gen_points_optimal()
+
+# # Beauty
+# s=10
+# r=28
+# b=2.667
+
+# #I1 +
+# s=10
+# r=28
+# b=2*s
+
+# #I2
+# s=10
+# r=0
+# b=1
+
+#I3
+s=1
+r=10
+b=1
+
+# #I4
+# s=.500000
+# r=2.0 * s - 1.0
+# b=6.0*s - 2.0
+
+# #I5 +
+# s=1
+# r=28
+# b=4
+
+xs, ys, zs, ts = gen_points_optimal(s=s,r=r,b=b)
+
+m = np.vstack([xs,ys,zs,ts])
+
+# I1 = (m[0]**2-2*s*m[2])*np.exp(2*s*m[3]) # req b==2s
+#
+# I2 = (m[1]**2 + m[2]**2 )*np.exp(2*m[3]) # req b=1, r=0
+#
+I3 = (-r**2 * m[0]**2 + m[1]**2 + m[2]**2)**np.exp(2*m[3]) # req b = 1, s = 1
+
+# I4 = (   (((2.0*s-1)**2)*s) *
+#          m[0]**2   +   s * m[1]**2   -  \
+#          (4*s - 2)*m[0]*m[1]  - \
+#          (1/(4*s)) * m[0]**4 + \
+#          m[0]**2 * m[2] ) * \
+#      np.exp(4*s*m[3]) # req b = 6*s - 2, r = 2*s-1
+#
+# I5 = ( -r*m[0]**2 - m[1]**2 + 2*m[0]*m[1]  + 0.25*m[0]**4 - m[0]**2*m[2] + 4*(r-1)*m[2])*np.exp(4*m[3]) # req b = 4, s = 1
+
+# minf=I1[-1] # -inf
+mm = -1#[i for i in range(len(I1)) if I1[i]==minf][0]
+
+
+# plt.plot(m[3][:mm],I3[:mm])
+plt.plot(I3[:mm])
+plt.show()
+print("WAIT")
+exit(0)
 fig = plt.figure()
 ax = fig.gca(projection='3d')
 
