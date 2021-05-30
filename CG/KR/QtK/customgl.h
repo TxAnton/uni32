@@ -48,7 +48,7 @@ private:
     unsigned int texture_n;
     int texwidth, texheight, texnrChannels;
     unsigned char *texdata;
-    GLfloat texoffset;
+    GLfloat sub_time;
 
     QGLShaderProgram*  shaderProgram;
 
@@ -56,6 +56,7 @@ private:
 
     QMatrix4x4 pmvMatrix;
 
+    bool doAnimate = true;
 
 
     double alpha = 0;
@@ -93,7 +94,6 @@ private:
     std::vector<std::tuple<GLfloat,GLfloat,GLfloat> > normals;
     std::list<std::tuple<GLuint ,GLuint ,GLuint>> faces;
 
-
     QVector3D light_source;
     float light_intensity = 1;
 
@@ -103,6 +103,11 @@ private:
     std::pair<int,int> _coordGlToScreen(double x, double y);
 #define _SQR(_X)        ( (_X)*(_X) )
 #define _ABS(_X)        ( (_X)<0?(-(_X)):(_X) )
+#define _MIN(_X,_Y)     ( (_X)<(_Y)?(_X):(_Y) )
+#define _MAX(_X,_Y)     ( (_X)>(_Y)?(_X):(_Y) )
+#define _D_CLAMP(_X,_D) ( _MAX((_X),(_D)) )
+#define _U_CLAMP(_X,_U) ( _MIN((_X),(_U)) )
+#define _CLAMP(_X,_D,_U) ( _U_CLAMP((_D_CLAMP((_X),(_D))),(_U)) )
 #define _GL_TO_SC_X(_X) ( (int)  (_ABS((_X)) / 2.0f * w) )
 #define _GL_TO_SC_Y(_Y) ( (int)  (_ABS((_Y)) / 2.0f * h) )
 #define _SC_TO_GL_X(_X) ( (double)     (_ABS((_X)) / ((double)w) * 2.0f) )
@@ -129,13 +134,18 @@ public slots:
     void slSetScZ(int value = 50);
 
 
+
+
     void slTimerUpdate();
+    void slControllerUpdate();
 
 public:
 
     void mousePressEvent(QMouseEvent *event) override;      //зажали клавишу мыши
     void mouseReleaseEvent(QMouseEvent *event) override;    //отпустили клавишу мыши
     void mouseMoveEvent(QMouseEvent *event) override;       //перемещение с зажатой клавишей мыши
+    void keyPressEvent(QKeyEvent *event) override;
+    void keyReleaseEvent(QKeyEvent *event) override;
     void wheelEvent(QWheelEvent *event);
     CustomGL();
     void initializeGL();
@@ -149,6 +159,8 @@ public:
     void drawAxis();
     void updateLighting();
     void getIco(int n = 0);
+    
+    void getRect(float p = 0);
 
 
     void initShaders();

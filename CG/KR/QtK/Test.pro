@@ -29,15 +29,12 @@ SOURCES += \
         mainwindow.cpp \
     customgl.cpp \
     interpolator.cpp \
-    l_system.cpp \
     viewmatrixwrapper.cpp
 
 HEADERS += \
         mainwindow.h \
     customgl.h \
     interpolator.h \
-    l_system.h \
-    stb_image.h \
     viewmatrixwrapper.h
 
 FORMS += \

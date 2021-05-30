@@ -84,7 +84,7 @@ MainWindow::MainWindow(QWidget *parent) :
     timer = new QTimer(this);
 //    connect(timer, SIGNAL(QTimer::timeout(QPrivateSignal)), cGL, SLOT(slTimerUpdate(QPrivateSignal)));
     connect(timer, &QTimer::timeout, cGL, &CustomGL::slTimerUpdate);
-//    timer->start(20);
+    timer->start(20);
 
     vertlayout->addWidget(cGL);
     vertlayout->addLayout(buttonslayout);
