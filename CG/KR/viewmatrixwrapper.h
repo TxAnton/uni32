@@ -27,7 +27,7 @@ public:
     void keyPressEvent(QKeyEvent *event);
     void keyReleaseEvent(QKeyEvent *event);
 
-private slots:
+public slots:
     void timerTimeout();
 
 private:

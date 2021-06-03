@@ -20,7 +20,6 @@ QMatrix4x4 ViewMatrixWrapper::matrix() {
 void ViewMatrixWrapper::mouseMoveEvent(QMouseEvent* event) {
     if (event->isAccepted())
         return;
-
     if (!_tracking)
         return;
 
@@ -126,7 +125,7 @@ void ViewMatrixWrapper::timerTimeout() {
     _lastTime = now;
     direction.normalize();
     _playerAt += direction  * delta * 12.0f;
-    emit changed();
+//    emit changed();
 }
 
 QVector3D ViewMatrixWrapper::eyeAt() {
